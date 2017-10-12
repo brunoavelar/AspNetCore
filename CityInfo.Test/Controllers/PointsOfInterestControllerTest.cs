@@ -121,5 +121,52 @@ namespace CityInfo.Test.Controllers
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
         }
+
+        [Test]
+        public void CreatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
+        {
+            var controller = new PointsOfInterestController();
+            var result = controller.CreatePointOfInterest(1, null);
+            result.Should().BeOfType<BadRequestResult>();
+            var badRequestResult = (BadRequestResult)result;
+            badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        }
+
+        [Test]
+        public void CreatePointOfInterest_ShouldReturn_404_When_TheIdOfCityIsInvalid()
+        {
+            var controller = new PointsOfInterestController();
+            var result = controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
+            result.Should().BeOfType<NotFoundResult>();
+            var notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        }
+
+        [Test]
+        public void CreatePointOfInterest_ShouldReturn_201()
+        {
+            var controller = new PointsOfInterestController();
+            var result = controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
+            result.Should().BeOfType<CreatedResult>();
+            var createdResult = (CreatedResult)result;
+            createdResult.StatusCode.Should().Be((int)HttpStatusCode.Created);
+            createdResult.Location.Should().BeEmpty(); //Fix at home
+        }
+
+        [Test]
+        public void CreatePointOfInterest_Should_CalculateNewId()
+        {
+            var currentMaxId = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
+
+            var controller = new PointsOfInterestController();
+            controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
+
+            var newPoi = CitiesDataStore.Current.Cities
+                .Single(x => x.Id == 1)
+                .PointsOfInterest
+                .SingleOrDefault(x => x.Id == currentMaxId + 1);
+
+            newPoi.Should().NotBeNull();
+        }
     }
 }
