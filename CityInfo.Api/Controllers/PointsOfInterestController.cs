@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+﻿using System.Linq;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CityInfo.Api.Controllers
@@ -21,7 +18,7 @@ namespace CityInfo.Api.Controllers
             return Ok(city.PointsOfInterest);
         }
 
-        [HttpGet("{cityId}/pointsOfInterest/{id}")]
+        [HttpGet("{cityId}/pointOfInterest/{id}")]
         public IActionResult GetPointOfInterest(int cityId, int id)
         {
             var city = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == cityId);

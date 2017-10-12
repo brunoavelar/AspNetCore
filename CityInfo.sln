@@ -3,7 +3,9 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
 VisualStudioVersion = 15.0.26730.16
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CityInfo.Api", "CityInfo.Api\CityInfo.Api.csproj", "{DC6DA6AB-1037-453F-96BA-84B8181DEC0E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "CityInfo.Api", "CityInfo.Api\CityInfo.Api.csproj", "{DC6DA6AB-1037-453F-96BA-84B8181DEC0E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CityInfo.Test", "CityInfo.Test\CityInfo.Test.csproj", "{97F090DF-895D-4C48-8D52-8CA896DC1693}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{DC6DA6AB-1037-453F-96BA-84B8181DEC0E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DC6DA6AB-1037-453F-96BA-84B8181DEC0E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DC6DA6AB-1037-453F-96BA-84B8181DEC0E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{97F090DF-895D-4C48-8D52-8CA896DC1693}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{97F090DF-895D-4C48-8D52-8CA896DC1693}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{97F090DF-895D-4C48-8D52-8CA896DC1693}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{97F090DF-895D-4C48-8D52-8CA896DC1693}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
