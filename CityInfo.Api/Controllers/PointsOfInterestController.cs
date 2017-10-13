@@ -1,6 +1,7 @@
 ﻿using System.Linq;
 using CityInfo.Api.Models;
 using Microsoft.AspNetCore.Mvc;
+using System.Threading.Tasks;
 
 namespace CityInfo.Api.Controllers
 {
@@ -40,17 +41,22 @@ namespace CityInfo.Api.Controllers
         }
 
         [HttpPost("{cityId}/pointOfInterest")]
-        public IActionResult CreatePointOfInterest(int cityId, [FromBody] PointOfInterestForCreationDto pointOfInterest)
+        public Task<IActionResult> CreatePointOfInterest(int cityId, [FromBody] PointOfInterestForCreationDto pointOfInterest)
         {
             if (pointOfInterest == null)
             {
-                return BadRequest();
+                return Task.FromResult<IActionResult>(BadRequest());
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Task.FromResult<IActionResult>(BadRequest(ModelState));
             }
 
             var city = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == cityId);
             if (city == null)
             {
-                return NotFound();
+                return Task.FromResult<IActionResult>(NotFound());
             }
 
             // For demo. Will change when adding EF support
@@ -66,11 +72,13 @@ namespace CityInfo.Api.Controllers
             };
             city.PointsOfInterest.Add(pointOfInterestToSave);
 
-            return CreatedAtRoute(GetPointOfInterestRouteName, new
+            var createdAtRoute = CreatedAtRoute(GetPointOfInterestRouteName, new
             {
                 cityId = cityId,
                 id = pointOfInterestToSave.Id
             }, pointOfInterestToSave);
+
+            return Task.FromResult<IActionResult>(createdAtRoute);
         }
     }
 }

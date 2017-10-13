@@ -7,7 +7,12 @@ using CityInfo.Api.Models;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc;
 using NUnit.Framework;
-
+using Microsoft.AspNetCore.TestHost;
+using System.Net.Http;
+using Microsoft.AspNetCore.Hosting;
+using System.Threading.Tasks;
+using Newtonsoft.Json;
+using System.Text;
 
 namespace CityInfo.Test.Controllers
 {
@@ -123,30 +128,30 @@ namespace CityInfo.Test.Controllers
         }
 
         [Test]
-        public void CreatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
+        public async Task CreatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
         {
             var controller = new PointsOfInterestController();
-            var result = controller.CreatePointOfInterest(1, null);
+            var result = await controller.CreatePointOfInterest(1, null);
             result.Should().BeOfType<BadRequestResult>();
             var badRequestResult = (BadRequestResult)result;
             badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
         }
 
         [Test]
-        public void CreatePointOfInterest_ShouldReturn_404_When_TheIdOfCityIsInvalid()
+        public async Task CreatePointOfInterest_ShouldReturn_404_When_TheIdOfCityIsInvalid()
         {
             var controller = new PointsOfInterestController();
-            var result = controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
+            var result = await controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
         }
 
         [Test]
-        public void CreatePointOfInterest_ShouldReturn_201()
+        public async Task CreatePointOfInterest_ShouldReturn_201()
         {
             var controller = new PointsOfInterestController();
-            var result = controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
+            var result = await controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
             result.Should().BeOfType<CreatedAtRouteResult>();
             var createdResult = (CreatedAtRouteResult)result;
             createdResult.StatusCode.Should().Be((int)HttpStatusCode.Created);
@@ -169,6 +174,42 @@ namespace CityInfo.Test.Controllers
                 .SingleOrDefault(x => x.Id == currentMaxId + 1);
 
             newPoi.Should().NotBeNull();
+        }
+
+        [Test]
+        public async Task CreatePointOfInterest_Integrate_ShouldValidateEntity()
+        {
+            var currentMaxId = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
+            var server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            var client = server.CreateClient();
+
+            var model = new PointOfInterestForCreationDto
+            {
+                Name = string.Empty
+            };
+
+            var content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            var result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            model.Name = new string('a', 51);
+            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            model.Name = new string('a', 50);
+            model.Description = new string('a', 201);
+            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            model.Name = new string('a', 50);
+            model.Description = new string('a', 200);
+
+            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result.StatusCode.Should().Be(HttpStatusCode.Created);
+            result.IsSuccessStatusCode.Should().BeTrue();
         }
     }
 }
