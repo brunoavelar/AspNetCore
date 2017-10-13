@@ -7,6 +7,8 @@ namespace CityInfo.Api.Controllers
     [Route("api/cities")]
     public class PointsOfInterestController : Controller
     {
+        public const string GetPointOfInterestRouteName = "GetPointOfInterest";
+
         [HttpGet("{cityId}/pointsOfInterest")]
         public IActionResult GetPointsOfInterest(int cityId)
         {
@@ -19,7 +21,7 @@ namespace CityInfo.Api.Controllers
             return Ok(city.PointsOfInterest);
         }
 
-        [HttpGet("{cityId}/pointOfInterest/{id}", Name = "GetPointOfInterest")]
+        [HttpGet("{cityId}/pointOfInterest/{id}", Name = GetPointOfInterestRouteName)]
         public IActionResult GetPointOfInterest(int cityId, int id)
         {
             var city = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == cityId);
@@ -64,7 +66,7 @@ namespace CityInfo.Api.Controllers
             };
             city.PointsOfInterest.Add(pointOfInterestToSave);
 
-            return CreatedAtRoute("GetPointOfInterest", new
+            return CreatedAtRoute(GetPointOfInterestRouteName, new
             {
                 cityId = cityId,
                 id = pointOfInterestToSave.Id

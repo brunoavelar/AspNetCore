@@ -147,10 +147,12 @@ namespace CityInfo.Test.Controllers
         {
             var controller = new PointsOfInterestController();
             var result = controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
-            result.Should().BeOfType<CreatedResult>();
-            var createdResult = (CreatedResult)result;
+            result.Should().BeOfType<CreatedAtRouteResult>();
+            var createdResult = (CreatedAtRouteResult)result;
             createdResult.StatusCode.Should().Be((int)HttpStatusCode.Created);
-            createdResult.Location.Should().BeEmpty(); //Fix at home
+            createdResult.RouteName.Should().Be(PointsOfInterestController.GetPointOfInterestRouteName);
+            createdResult.RouteValues["cityId"].Should().Be(1);
+            createdResult.RouteValues["id"].Should().Be(3);
         }
 
         [Test]
