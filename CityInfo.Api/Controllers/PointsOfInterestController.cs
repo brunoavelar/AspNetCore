@@ -80,5 +80,36 @@ namespace CityInfo.Api.Controllers
 
             return Task.FromResult<IActionResult>(createdAtRoute);
         }
+
+        [HttpPut("{cityId}/pointOfInterest/{id}")]
+        public Task<IActionResult> UpdatePointOfInterest(int cityId, int id, [FromBody] PointOfInterestForUpdateDto pointOfInterest)
+        {
+            if (pointOfInterest == null)
+            {
+                return Task.FromResult<IActionResult>(BadRequest());
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return Task.FromResult<IActionResult>(BadRequest(ModelState));
+            }
+
+            var city = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == cityId);
+            if (city == null)
+            {
+                return Task.FromResult<IActionResult>(NotFound());
+            }
+
+            var pointOfInterestFromDb = city.PointsOfInterest.FirstOrDefault(x => x.Id == id);
+            if (pointOfInterestFromDb == null)
+            {
+                return Task.FromResult<IActionResult>(NotFound());
+            }
+
+            pointOfInterestFromDb.Name = pointOfInterest.Name;
+            pointOfInterestFromDb.Description = pointOfInterest.Description;
+
+            return Task.FromResult<IActionResult>(NoContent());
+        }
     }
 }

@@ -48,6 +48,8 @@ namespace CityInfo.Test.Controllers
             CitiesDataStore.Current.Cities.Add(city1);
         }
 
+        #region Get Points of Interest
+
         [Test]
         public void GetPointsOfInterest_ShouldReturn_200()
         {
@@ -63,8 +65,8 @@ namespace CityInfo.Test.Controllers
         {
             var controller = new PointsOfInterestController();
             var result = controller.GetPointsOfInterest(1);
-            var okResult = (OkObjectResult) result;
-            var data = (IEnumerable<PointOfInterestDto>) okResult.Value;
+            var okResult = (OkObjectResult)result;
+            var data = (IEnumerable<PointOfInterestDto>)okResult.Value;
 
             data.Should().HaveCount(2);
         }
@@ -77,7 +79,11 @@ namespace CityInfo.Test.Controllers
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
-        }
+        } 
+
+        #endregion
+
+        #region Get Point of Interest
 
         [Test]
         public void GetPointOfInterest_ShouldReturn_200()
@@ -126,6 +132,10 @@ namespace CityInfo.Test.Controllers
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
         }
+
+        #endregion
+
+        #region Create Point of Interest
 
         [Test]
         public async Task CreatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
@@ -211,5 +221,86 @@ namespace CityInfo.Test.Controllers
             result.StatusCode.Should().Be(HttpStatusCode.Created);
             result.IsSuccessStatusCode.Should().BeTrue();
         }
+
+        #endregion
+
+        #region Total Update (PUT) of Point of Interest
+
+        [Test]
+        public async Task UpdatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.UpdatePointOfInterest(1, 1, null);
+            result.Should().BeOfType<BadRequestResult>();
+            var badRequestResult = (BadRequestResult)result;
+            badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        }
+
+        [Test]
+        public async Task UpdatePointOfInterest_ShouldReturn_404_When_IdsAreInvalid()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.UpdatePointOfInterest(1, 3, new PointOfInterestForUpdateDto());
+            result.Should().BeOfType<NotFoundResult>();
+            var notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+
+            result = await controller.UpdatePointOfInterest(3, 1, new PointOfInterestForUpdateDto());
+            result.Should().BeOfType<NotFoundResult>();
+            notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        }
+
+
+        [Test]
+        public async Task UpdatePointOfInterest_ShouldReturn_204()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.UpdatePointOfInterest(1, 1, new PointOfInterestForUpdateDto());
+            result.Should().BeOfType<NoContentResult>();
+            var noContentResult = (NoContentResult)result;
+            noContentResult.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+        }
+
+        [Test]
+        public async Task UpdatePointOfInterest_Integrate_ShouldValidateEntity()
+        {
+            var server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            var client = server.CreateClient();
+
+            var model = new PointOfInterestForCreationDto
+            {
+                Name = string.Empty
+            };
+
+            var content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            var result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            model.Name = new string('a', 51);
+            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            model.Name = new string('a', 50);
+            model.Description = new string('a', 201);
+            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            model.Name = new string('a', 50);
+            model.Description = new string('a', 200);
+
+            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
+            result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            result.IsSuccessStatusCode.Should().BeTrue();
+
+            var poiFromDb = CitiesDataStore.Current.Cities.Single(x => x.Id == 1).PointsOfInterest.Single(x => x.Id == 1);
+            poiFromDb.Name.Should().Be(model.Name);
+            poiFromDb.Description.Should().Be(model.Description);
+        } 
+
+        #endregion
     }
 }
