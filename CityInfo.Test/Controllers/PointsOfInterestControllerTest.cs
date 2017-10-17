@@ -13,6 +13,10 @@ using Microsoft.AspNetCore.Hosting;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Text;
+using Microsoft.AspNetCore.JsonPatch;
+using Newtonsoft.Json.Linq;
+using System.Dynamic;
+using CityInfo.Test.Extentions;
 
 namespace CityInfo.Test.Controllers
 {
@@ -299,8 +303,82 @@ namespace CityInfo.Test.Controllers
             var poiFromDb = CitiesDataStore.Current.Cities.Single(x => x.Id == 1).PointsOfInterest.Single(x => x.Id == 1);
             poiFromDb.Name.Should().Be(model.Name);
             poiFromDb.Description.Should().Be(model.Description);
-        } 
+        }
 
         #endregion
+
+        #region Total Update (PUT) of Point of Interest
+
+        [Test]
+        public async Task PartiallyUpdatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.PartiallyUpdatePointOfInterest(1, 1, null);
+            result.Should().BeOfType<BadRequestResult>();
+            var badRequestResult = (BadRequestResult)result;
+            badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
+        }
+
+        [Test]
+        public async Task PartiallyUpdatePointOfInterest_ShouldReturn_404_When_IdsAreInvalid()
+        {
+            var patchDoc = new JsonPatchDocument<PointOfInterestForUpdateDto>();
+            patchDoc.Replace(x => x.Name, "Updated - PoI 1");
+
+            var controller = new PointsOfInterestController();
+            var result = await controller.PartiallyUpdatePointOfInterest(1, 3, patchDoc);
+            result.Should().BeOfType<NotFoundResult>();
+            var notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+
+            result = await controller.PartiallyUpdatePointOfInterest(3, 1, patchDoc);
+            result.Should().BeOfType<NotFoundResult>();
+            notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        }
+
+        [Test]
+        public async Task PartiallyUpdatePointOfInterest_Integrate_ShouldValidateEntity()
+        {
+            var server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            HttpClient client = server.CreateClient();
+
+            var patchDoc = new JsonPatchDocument<PointOfInterestForUpdateDto>();
+            patchDoc.Replace(x => x.Name, string.Empty); // Invalid
+            patchDoc.Remove(x => x.Description); // Invalid
+
+            var content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
+            var result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            patchDoc.Replace(x => x.Name, new string('a', 51)); // Invalid - Too many characters
+            patchDoc.Replace(x => x.Description, new string('a', 51)); // Valid - Should validate just Vame
+            content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
+            result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            patchDoc.Replace(x => x.Name, new string('a', 50)); // Valid - Should validate Description
+            patchDoc.Replace(x => x.Description, new string('a', 201)); // Invalid - Too many characters
+            content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
+            result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+
+            var validName = new string('a', 50);
+            var validDescription = new string('a', 200);
+
+            patchDoc.Replace(x => x.Name, validName); // Valid
+            patchDoc.Replace(x => x.Description, validDescription); // Valid
+            content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
+            result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result.StatusCode.Should().Be(HttpStatusCode.NoContent);
+            result.IsSuccessStatusCode.Should().BeTrue();
+
+            var poiFromDb = CitiesDataStore.Current.Cities.Single(x => x.Id == 1).PointsOfInterest.Single(x => x.Id == 1);
+            poiFromDb.Name.Should().Be(validName);
+            poiFromDb.Description.Should().Be(validDescription);
+        }
+
+        #endregion
+
     }
 }

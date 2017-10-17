@@ -2,6 +2,7 @@
 using CityInfo.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.JsonPatch;
 
 namespace CityInfo.Api.Controllers
 {
@@ -108,6 +109,47 @@ namespace CityInfo.Api.Controllers
 
             pointOfInterestFromDb.Name = pointOfInterest.Name;
             pointOfInterestFromDb.Description = pointOfInterest.Description;
+
+            return Task.FromResult<IActionResult>(NoContent());
+        }
+
+        [HttpPatch("{cityId}/pointOfInterest/{id}")]
+        public Task<IActionResult> PartiallyUpdatePointOfInterest(int cityId, int id, [FromBody] JsonPatchDocument<PointOfInterestForUpdateDto> patchDoc)
+        {
+            if (patchDoc == null)
+            {
+                return Task.FromResult<IActionResult>(BadRequest());
+            }
+
+            var city = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == cityId);
+            if (city == null)
+            {
+                return Task.FromResult<IActionResult>(NotFound());
+            }
+
+            var pointOfInterestFromDb = city.PointsOfInterest.FirstOrDefault(x => x.Id == id);
+            if (pointOfInterestFromDb == null)
+            {
+                return Task.FromResult<IActionResult>(NotFound());
+            }
+
+            var pointOfInterestToPatch = new PointOfInterestForUpdateDto
+            {
+                Name = pointOfInterestFromDb.Name,
+                Description = pointOfInterestFromDb.Description
+            };
+
+            patchDoc.ApplyTo(pointOfInterestToPatch);
+
+            TryValidateModel(pointOfInterestToPatch);
+
+            if (!ModelState.IsValid)
+            {
+                return Task.FromResult<IActionResult>(BadRequest(ModelState));
+            }
+
+            pointOfInterestFromDb.Name = pointOfInterestToPatch.Name;
+            pointOfInterestFromDb.Description = pointOfInterestToPatch.Description;
 
             return Task.FromResult<IActionResult>(NoContent());
         }
