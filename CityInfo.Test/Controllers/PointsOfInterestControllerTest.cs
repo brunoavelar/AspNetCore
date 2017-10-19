@@ -118,7 +118,7 @@ namespace CityInfo.Test.Controllers
         }
 
         [Test]
-        public void GetPointOfInterest_ShouldReturn_NotFound_When_TheCityIsNotFound()
+        public void GetPointOfInterest_ShouldReturn_404_When_TheCityIsNotFound()
         {
             var controller = new PointsOfInterestController();
             var result = controller.GetPointOfInterest(2, 1);
@@ -380,5 +380,38 @@ namespace CityInfo.Test.Controllers
 
         #endregion
 
+        #region Delete Point of Interest
+
+        [Test]
+        public async Task DeletePointOfInterest_ShouldReturn_204()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.DeletePointOfInterest(1, 1);
+            result.Should().BeOfType<NoContentResult>();
+            var okResult = (NoContentResult)result;
+            okResult.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
+        }
+
+        [Test]
+        public async Task DeletePointOfInterest_ShouldReturn_404_When_TheCityIsNotFound()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.DeletePointOfInterest(2, 1);
+            result.Should().BeOfType<NotFoundResult>();
+            var notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        }
+
+        [Test]
+        public async Task DeletePointOfInterest_ShouldReturn_404_When_ThePoiIsNotFound()
+        {
+            var controller = new PointsOfInterestController();
+            var result = await controller.DeletePointOfInterest(1, 3);
+            result.Should().BeOfType<NotFoundResult>();
+            var notFoundResult = (NotFoundResult)result;
+            notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
+        }
+
+        #endregion
     }
 }

@@ -3,6 +3,7 @@ using CityInfo.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
+using System;
 
 namespace CityInfo.Api.Controllers
 {
@@ -150,6 +151,26 @@ namespace CityInfo.Api.Controllers
 
             pointOfInterestFromDb.Name = pointOfInterestToPatch.Name;
             pointOfInterestFromDb.Description = pointOfInterestToPatch.Description;
+
+            return Task.FromResult<IActionResult>(NoContent());
+        }
+
+        [HttpDelete("{cityId}/pointOfInterest/{id}")]
+        public Task<IActionResult> DeletePointOfInterest(int cityId, int id)
+        {
+            var city = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == cityId);
+            if (city == null)
+            {
+                return Task.FromResult<IActionResult>(NotFound());
+            }
+
+            var pointOfInterestFromDb = city.PointsOfInterest.FirstOrDefault(x => x.Id == id);
+            if (pointOfInterestFromDb == null)
+            {
+                return Task.FromResult<IActionResult>(NotFound());
+            }
+
+            city.PointsOfInterest.Remove(pointOfInterestFromDb);
 
             return Task.FromResult<IActionResult>(NoContent());
         }
