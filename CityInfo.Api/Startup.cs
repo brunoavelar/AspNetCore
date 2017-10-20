@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc.Formatters;
 using Microsoft.Extensions.DependencyInjection;
+using CityInfo.Api.Utils;
 
 namespace CityInfo.Api
 {
@@ -19,6 +20,8 @@ namespace CityInfo.Api
         {
             services.AddMvc()
                 .AddMvcOptions(x => x.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter()));
+
+            services.AddSingleton(typeof(ILoggerAdapter<>), typeof(LoggerAdapter<>));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
