@@ -3,7 +3,8 @@ using CityInfo.Api.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
-using CityInfo.Api.Utils;
+using CityInfo.Api.Services;
+using System;
 
 namespace CityInfo.Api.Controllers
 {
@@ -12,11 +13,13 @@ namespace CityInfo.Api.Controllers
     {
         public const string GetPointOfInterestRouteName = "GetPointOfInterest";
 
-        private ILoggerAdapter<PointsOfInterestController> _logger;
+        private ILoggerService<PointsOfInterestController> _logger;
+        private IMailService _mailService;
 
-        public PointsOfInterestController(ILoggerAdapter<PointsOfInterestController> logger)
+        public PointsOfInterestController(ILoggerService<PointsOfInterestController> logger, IMailService mailService)
         {
             _logger = logger;
+            _mailService = mailService;
         }
 
         [HttpGet("{cityId}/pointsOfInterest")]
@@ -178,8 +181,14 @@ namespace CityInfo.Api.Controllers
             }
 
             city.PointsOfInterest.Remove(pointOfInterestFromDb);
+            NotifyAdmin(pointOfInterestFromDb);
 
             return Task.FromResult<IActionResult>(NoContent());
+        }
+
+        private void NotifyAdmin(PointOfInterestDto pointOfInterest)
+        {
+            _mailService.Send("Point of Interested deleted", $"The Point of Interested ${pointOfInterest.Name} was deleted");
         }
 
         private CityDto GetCity(int cityId)

@@ -4,7 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 
-namespace CityInfo.Api.Utils
+namespace CityInfo.Api.Services
 {
     public static class LogMessages
     {
@@ -12,17 +12,17 @@ namespace CityInfo.Api.Utils
         public static string PointOfInterestNotFoundMsg = "Point of Interest with ID {0} not found";
     }
 
-    public interface ILoggerAdapter<T>
+    public interface ILoggerService<T>
     {
         void LogError(string message);
         void LogInformation(string message);
     }
 
-    public class LoggerAdapter<T> : ILoggerAdapter<T>
+    public class LoggerService<T> : ILoggerService<T>
     {
         private ILogger<T> _logger;
 
-        public LoggerAdapter(ILogger<T> logger)
+        public LoggerService(ILogger<T> logger)
         {
             _logger = logger;
         }
