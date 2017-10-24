@@ -188,7 +188,7 @@ namespace CityInfo.Api.Controllers
 
         private void NotifyAdmin(PointOfInterestDto pointOfInterest)
         {
-            _mailService.Send("Point of Interested deleted", $"The Point of Interested ${pointOfInterest.Name} was deleted");
+            _mailService.Send("Point of Interested deleted", $"The Point of Interested {pointOfInterest.Name} was deleted");
         }
 
         private CityDto GetCity(int cityId)

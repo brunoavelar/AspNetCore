@@ -13,8 +13,8 @@ namespace CityInfo.Api.Services
 
     public class CrapMailService : IMailService
     {
-        private string _mailTo = "admin@fakeemailaddress.com";
-        private string _mailFrom = "noreply@fakeemailaddress.com";
+        private string _mailTo = Startup.Configuration["mailSettings:mailToAddress"];
+        private string _mailFrom = Startup.Configuration["mailSettings:mailFromAddress"];
 
         public void Send(string subject, string message)
         {
