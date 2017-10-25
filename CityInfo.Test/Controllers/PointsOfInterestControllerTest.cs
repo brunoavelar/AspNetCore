@@ -17,6 +17,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using CityInfo.Test.Extentions;
 using Moq;
 using CityInfo.Api.Services;
+using Microsoft.AspNetCore;
 
 namespace CityInfo.Test.Controllers
 {
@@ -237,7 +238,7 @@ namespace CityInfo.Test.Controllers
         public async Task CreatePointOfInterest_Integrate_ShouldValidateEntity()
         {
             var currentMaxId = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
-            var server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            TestServer server = CreateFakeServer();
             var client = server.CreateClient();
 
             var model = new PointOfInterestForCreationDto
@@ -267,6 +268,14 @@ namespace CityInfo.Test.Controllers
             result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
             result.StatusCode.Should().Be(HttpStatusCode.Created);
             result.IsSuccessStatusCode.Should().BeTrue();
+        }
+
+        private static TestServer CreateFakeServer()
+        {
+            var builder = WebHost.CreateDefaultBuilder().UseStartup<Startup>();
+            var server = new TestServer(builder);
+
+            return server;
         }
 
         #endregion
@@ -328,7 +337,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task UpdatePointOfInterest_Integrate_ShouldValidateEntity()
         {
-            var server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            var server = CreateFakeServer();
             var client = server.CreateClient();
 
             var model = new PointOfInterestForCreationDto
@@ -417,7 +426,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task PartiallyUpdatePointOfInterest_Integrate_ShouldValidateEntity()
         {
-            var server = new TestServer(new WebHostBuilder().UseStartup<Startup>());
+            var server = CreateFakeServer();
             HttpClient client = server.CreateClient();
 
             var patchDoc = new JsonPatchDocument<PointOfInterestForUpdateDto>();
