@@ -234,50 +234,6 @@ namespace CityInfo.Test.Controllers
             newPoi.Should().NotBeNull();
         }
 
-        [Test]
-        public async Task CreatePointOfInterest_Integrate_ShouldValidateEntity()
-        {
-            var currentMaxId = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
-            TestServer server = CreateFakeServer();
-            var client = server.CreateClient();
-
-            var model = new PointOfInterestForCreationDto
-            {
-                Name = string.Empty
-            };
-
-            var content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            var result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            model.Name = new string('a', 51);
-            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            model.Name = new string('a', 50);
-            model.Description = new string('a', 201);
-            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            model.Name = new string('a', 50);
-            model.Description = new string('a', 200);
-
-            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await client.PostAsync("/api/cities/1/pointOfInterest", content);
-            result.StatusCode.Should().Be(HttpStatusCode.Created);
-            result.IsSuccessStatusCode.Should().BeTrue();
-        }
-
-        private static TestServer CreateFakeServer()
-        {
-            var builder = WebHost.CreateDefaultBuilder().UseStartup<Startup>();
-            var server = new TestServer(builder);
-
-            return server;
-        }
-
         #endregion
 
         #region Total Update (PUT) of Point of Interest
@@ -330,45 +286,6 @@ namespace CityInfo.Test.Controllers
             noContentResult.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
         }
 
-        [Test]
-        public async Task UpdatePointOfInterest_Integrate_ShouldValidateEntity()
-        {
-            var server = CreateFakeServer();
-            var client = server.CreateClient();
-
-            var model = new PointOfInterestForCreationDto
-            {
-                Name = string.Empty
-            };
-
-            var content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            var result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            model.Name = new string('a', 51);
-            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            model.Name = new string('a', 50);
-            model.Description = new string('a', 201);
-            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            model.Name = new string('a', 50);
-            model.Description = new string('a', 200);
-
-            content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await client.PutAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.NoContent);
-            result.IsSuccessStatusCode.Should().BeTrue();
-
-            var poiFromDb = CitiesDataStore.Current.Cities.Single(x => x.Id == 1).PointsOfInterest.Single(x => x.Id == 1);
-            poiFromDb.Name.Should().Be(model.Name);
-            poiFromDb.Description.Should().Be(model.Description);
-        }
-
         #endregion
 
         #region Total Update (PUT) of Point of Interest
@@ -415,48 +332,7 @@ namespace CityInfo.Test.Controllers
             expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
         }
-
-        [Test]
-        public async Task PartiallyUpdatePointOfInterest_Integrate_ShouldValidateEntity()
-        {
-            var server = CreateFakeServer();
-            HttpClient client = server.CreateClient();
-
-            var patchDoc = new JsonPatchDocument<PointOfInterestForUpdateDto>();
-            patchDoc.Replace(x => x.Name, string.Empty); // Invalid
-            patchDoc.Remove(x => x.Description); // Invalid
-
-            var content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            var result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            patchDoc.Replace(x => x.Name, new string('a', 51)); // Invalid - Too many characters
-            patchDoc.Replace(x => x.Description, new string('a', 51)); // Valid - Should validate just Vame
-            content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            patchDoc.Replace(x => x.Name, new string('a', 50)); // Valid - Should validate Description
-            patchDoc.Replace(x => x.Description, new string('a', 201)); // Invalid - Too many characters
-            content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-
-            var validName = new string('a', 50);
-            var validDescription = new string('a', 200);
-
-            patchDoc.Replace(x => x.Name, validName); // Valid
-            patchDoc.Replace(x => x.Description, validDescription); // Valid
-            content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            result = await client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
-            result.StatusCode.Should().Be(HttpStatusCode.NoContent);
-            result.IsSuccessStatusCode.Should().BeTrue();
-
-            var poiFromDb = CitiesDataStore.Current.Cities.Single(x => x.Id == 1).PointsOfInterest.Single(x => x.Id == 1);
-            poiFromDb.Name.Should().Be(validName);
-            poiFromDb.Description.Should().Be(validDescription);
-        }
-
+        
         #endregion
 
         #region Delete Point of Interest
