@@ -26,12 +26,16 @@ namespace CityInfo.Test.Controllers
     {
         private Mock<ILoggerService<PointsOfInterestController>> _mockLogger;
         private Mock<IMailService> _mockMailService;
+        private Mock<IRepository> _mockRepository;
+
+        private PointsOfInterestController _controller;
 
         [SetUp]
         public void Setup()
         {
             _mockLogger = new Mock<ILoggerService<PointsOfInterestController>>();
             _mockMailService = new Mock<IMailService>();
+            _mockRepository = new Mock<IRepository>();
 
             var city1 = new CityDto()
             {
@@ -57,6 +61,17 @@ namespace CityInfo.Test.Controllers
 
             CitiesDataStore.Current.Cities.Clear();
             CitiesDataStore.Current.Cities.Add(city1);
+
+            _controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
+        }
+
+        [TearDown]
+        public void Cleanup()
+        {
+            if(_controller != null)
+            {
+                _controller.Dispose();
+            }
         }
 
         #region Get Points of Interest
@@ -64,8 +79,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointsOfInterest_ShouldReturn_200()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointsOfInterest(1);
+            var result = _controller.GetPointsOfInterest(1);
             result.Should().BeOfType<OkObjectResult>();
             var okResult = (OkObjectResult)result;
             okResult.StatusCode.Should().Be((int)HttpStatusCode.OK);
@@ -74,8 +88,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointsOfInterest_ShouldReturn_AllPointsOfInterestsForTheCity()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointsOfInterest(1);
+            var result = _controller.GetPointsOfInterest(1);
             var okResult = (OkObjectResult)result;
             var data = (IEnumerable<PointOfInterestDto>)okResult.Value;
 
@@ -85,8 +98,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointsOfInterest_ShouldReturn_404_When_TheCityIsNotFound()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointsOfInterest(2);
+            var result = _controller.GetPointsOfInterest(2);
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -95,8 +107,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointsOfInterest_ShouldLog_Message_When_TheCityIsNotFound()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            controller.GetPointsOfInterest(2);
+            _controller.GetPointsOfInterest(2);
             _mockLogger.Verify(x => x.LogInformation(It.IsAny<string>()), Times.Once());
             var expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 2);
         }
@@ -108,8 +119,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldReturn_200()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointOfInterest(1, 1);
+            var result = _controller.GetPointOfInterest(1, 1);
             result.Should().BeOfType<OkObjectResult>();
             var okResult = (OkObjectResult)result;
             okResult.StatusCode.Should().Be((int)HttpStatusCode.OK);
@@ -118,8 +128,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldReturn_ThePointOfInterestWithSpecifiedIdFromTheSpecifiedTheCity()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointOfInterest(1, 1);
+            var result = _controller.GetPointOfInterest(1, 1);
             var okResult = (OkObjectResult)result;
             var data = (PointOfInterestDto)okResult.Value;
 
@@ -136,8 +145,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldLog_Message_When_TheCityIsNotFound()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointOfInterest(2, 1);
+            var result = _controller.GetPointOfInterest(2, 1);
             var expectedLog = string.Format(LogMessages.CityNotFoundMsg, 2);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
         }
@@ -145,8 +153,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldReturn_404_When_TheCityIsNotFound()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointOfInterest(2, 1);
+            var result = _controller.GetPointOfInterest(2, 1);
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -156,8 +163,7 @@ namespace CityInfo.Test.Controllers
         public void GetPointOfInterest_ShouldLogMessage_When_ThePoiIsNotFound()
         {
 
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointOfInterest(1, 3);
+            var result = _controller.GetPointOfInterest(1, 3);
             var expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
         }
@@ -165,8 +171,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldReturn_404_When_ThePoiIsNotFound()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = controller.GetPointOfInterest(1, 3);
+            var result = _controller.GetPointOfInterest(1, 3);
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -179,8 +184,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task CreatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.CreatePointOfInterest(1, null);
+            var result = await _controller.CreatePointOfInterest(1, null);
             result.Should().BeOfType<BadRequestResult>();
             var badRequestResult = (BadRequestResult)result;
             badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
@@ -189,8 +193,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task CreatePointOfInterest_ShouldReturn_404_When_TheIdOfCityIsInvalid()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
+            var result = await _controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -199,8 +202,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task CreatePointOfInterest_ShouldLogMessage_When_TheCityIsNotFound()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
+            var result = await _controller.CreatePointOfInterest(3, new PointOfInterestForCreationDto());
             var expectedLog = string.Format(LogMessages.CityNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
         }
@@ -208,8 +210,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task CreatePointOfInterest_ShouldReturn_201()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
+            var result = await _controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
             result.Should().BeOfType<CreatedAtRouteResult>();
             var createdResult = (CreatedAtRouteResult)result;
             createdResult.StatusCode.Should().Be((int)HttpStatusCode.Created);
@@ -223,8 +224,7 @@ namespace CityInfo.Test.Controllers
         {
             var currentMaxId = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
 
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
+            _controller.CreatePointOfInterest(1, new PointOfInterestForCreationDto());
 
             var newPoi = CitiesDataStore.Current.Cities
                 .Single(x => x.Id == 1)
@@ -285,8 +285,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task UpdatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.UpdatePointOfInterest(1, 1, null);
+            var result = await _controller.UpdatePointOfInterest(1, 1, null);
             result.Should().BeOfType<BadRequestResult>();
             var badRequestResult = (BadRequestResult)result;
             badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
@@ -295,13 +294,12 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task UpdatePointOfInterest_ShouldReturn_404_When_IdsAreInvalid()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.UpdatePointOfInterest(1, 3, new PointOfInterestForUpdateDto());
+            var result = await _controller.UpdatePointOfInterest(1, 3, new PointOfInterestForUpdateDto());
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
 
-            result = await controller.UpdatePointOfInterest(3, 1, new PointOfInterestForUpdateDto());
+            result = await _controller.UpdatePointOfInterest(3, 1, new PointOfInterestForUpdateDto());
             result.Should().BeOfType<NotFoundResult>();
             notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -310,14 +308,13 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task UpdatePointOfInterest_ShouldLogMessage_When_IdsAreInvalid()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.UpdatePointOfInterest(3, 1, new PointOfInterestForUpdateDto());
+            var result = await _controller.UpdatePointOfInterest(3, 1, new PointOfInterestForUpdateDto());
             var expectedLog = string.Format(LogMessages.CityNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
 
             _mockLogger.ResetCalls();
 
-            result = await controller.UpdatePointOfInterest(1, 3, new PointOfInterestForUpdateDto());
+            result = await _controller.UpdatePointOfInterest(1, 3, new PointOfInterestForUpdateDto());
             result.Should().BeOfType<NotFoundResult>();
             expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
@@ -327,8 +324,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task UpdatePointOfInterest_ShouldReturn_204()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.UpdatePointOfInterest(1, 1, new PointOfInterestForUpdateDto());
+            var result = await _controller.UpdatePointOfInterest(1, 1, new PointOfInterestForUpdateDto());
             result.Should().BeOfType<NoContentResult>();
             var noContentResult = (NoContentResult)result;
             noContentResult.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
@@ -380,8 +376,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task PartiallyUpdatePointOfInterest_ShouldReturn_400_When_InvalidDataIsSent()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.PartiallyUpdatePointOfInterest(1, 1, null);
+            var result = await _controller.PartiallyUpdatePointOfInterest(1, 1, null);
             result.Should().BeOfType<BadRequestResult>();
             var badRequestResult = (BadRequestResult)result;
             badRequestResult.StatusCode.Should().Be((int)HttpStatusCode.BadRequest);
@@ -393,13 +388,12 @@ namespace CityInfo.Test.Controllers
             var patchDoc = new JsonPatchDocument<PointOfInterestForUpdateDto>();
             patchDoc.Replace(x => x.Name, "Updated - PoI 1");
 
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.PartiallyUpdatePointOfInterest(1, 3, patchDoc);
+            var result = await _controller.PartiallyUpdatePointOfInterest(1, 3, patchDoc);
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
 
-            result = await controller.PartiallyUpdatePointOfInterest(3, 1, patchDoc);
+            result = await _controller.PartiallyUpdatePointOfInterest(3, 1, patchDoc);
             result.Should().BeOfType<NotFoundResult>();
             notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -411,14 +405,13 @@ namespace CityInfo.Test.Controllers
             var patchDoc = new JsonPatchDocument<PointOfInterestForUpdateDto>();
             patchDoc.Replace(x => x.Name, "Updated - PoI 1");
 
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.PartiallyUpdatePointOfInterest(3, 1, patchDoc);
+            var result = await _controller.PartiallyUpdatePointOfInterest(3, 1, patchDoc);
             var expectedLog = string.Format(LogMessages.CityNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
 
             _mockLogger.ResetCalls();
 
-            result = await controller.PartiallyUpdatePointOfInterest(1, 3, patchDoc);
+            result = await _controller.PartiallyUpdatePointOfInterest(1, 3, patchDoc);
             expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
         }
@@ -471,8 +464,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task DeletePointOfInterest_ShouldReturn_204()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.DeletePointOfInterest(1, 1);
+            var result = await _controller.DeletePointOfInterest(1, 1);
             result.Should().BeOfType<NoContentResult>();
             var okResult = (NoContentResult)result;
             okResult.StatusCode.Should().Be((int)HttpStatusCode.NoContent);
@@ -481,13 +473,12 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task DeletePointOfInterest_ShouldReturn_404_When_IdsAreInvalid()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.DeletePointOfInterest(2, 1);
+            var result = await _controller.DeletePointOfInterest(2, 1);
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
 
-            result = await controller.DeletePointOfInterest(1, 3);
+            result = await _controller.DeletePointOfInterest(1, 3);
             result.Should().BeOfType<NotFoundResult>();
             notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
@@ -496,14 +487,13 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task DeletePointOfInterest_ShouldLogMessage_When_IdsAreInvalid()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.DeletePointOfInterest(2, 1);
+            var result = await _controller.DeletePointOfInterest(2, 1);
             var expectedLog = string.Format(LogMessages.CityNotFoundMsg, 2);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
 
             _mockLogger.ResetCalls();
 
-            result = await controller.DeletePointOfInterest(1, 3);
+            result = await _controller.DeletePointOfInterest(1, 3);
             expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 3);
             _mockLogger.Verify(x => x.LogInformation(expectedLog), Times.Once());
         }
@@ -511,8 +501,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public async Task DeletePointOfInterest_ShouldMailAdmin_When_Deleted()
         {
-            var controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
-            var result = await controller.DeletePointOfInterest(1, 1);
+            var result = await _controller.DeletePointOfInterest(1, 1);
             _mockMailService.Verify(x => x.Send(It.IsAny<string>(), It.IsAny<string>()));
         }
 

@@ -32,7 +32,8 @@ namespace CityInfo.Api
                 .AddMvcOptions(x => x.OutputFormatters.Add(new XmlDataContractSerializerOutputFormatter()));
 
             services.AddSingleton(typeof(ILoggerService<>), typeof(LoggerService<>));
-            services.AddTransient(typeof(IMailService), typeof(CrapMailService));
+            services.AddTransient<IMailService, CrapMailService>();
+            services.AddScoped<IRepository, Repository>();
 
             var connectionString = Configuration["connectionStrings:cityInfoDBConnectionString"];
             services.AddDbContext<CityInfoContext>(x => x.UseSqlServer(connectionString));
