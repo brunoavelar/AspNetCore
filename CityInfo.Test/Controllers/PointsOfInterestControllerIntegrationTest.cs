@@ -22,49 +22,8 @@ using Microsoft.AspNetCore;
 namespace CityInfo.Test.Controllers
 {
     [TestFixture]
-    public class PointsOfInterestControllerIntegrationTest
+    public class PointsOfInterestControllerIntegrationTest : IntegrationTestBase
     {
-        private HttpClient _client;
-
-        [SetUp]
-        public void Setup()
-        {
-            TestServer server = CreateFakeServer();
-            _client = server.CreateClient();
-
-            var city1 = new CityDto()
-            {
-                Id = 1,
-                Name = "City 1",
-                Description = "Description of city 1",
-                PointsOfInterest = new List<PointOfInterestDto>
-                {
-                    new PointOfInterestDto
-                    {
-                        Id = 1,
-                        Name = "PoI 1",
-                        Description = "Description of PoI 1"
-                    },
-                    new PointOfInterestDto
-                    {
-                        Id = 2,
-                        Name = "PoI 2",
-                        Description = "Description of PoI 2"
-                    }
-                }
-            };
-
-            CitiesDataStore.Current.Cities.Clear();
-            CitiesDataStore.Current.Cities.Add(city1);
-        }
-
-        private static TestServer CreateFakeServer()
-        {
-            var builder = WebHost.CreateDefaultBuilder().UseStartup<Startup>();
-
-            return new TestServer(builder);
-        }
-
         [Test]
         public async Task CreatePointOfInterest_Integrate_ShouldValidateEntity()
         {
@@ -76,25 +35,25 @@ namespace CityInfo.Test.Controllers
             };
 
             var content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            var result = await _client.PostAsync("/api/cities/1/pointOfInterest", content);
+            var result = await Client.PostAsync("/api/cities/1/pointOfInterest", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             model.Name = new string('a', 51);
             content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await _client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result = await Client.PostAsync("/api/cities/1/pointOfInterest", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             model.Name = new string('a', 50);
             model.Description = new string('a', 201);
             content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await _client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result = await Client.PostAsync("/api/cities/1/pointOfInterest", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             model.Name = new string('a', 50);
             model.Description = new string('a', 200);
 
             content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await _client.PostAsync("/api/cities/1/pointOfInterest", content);
+            result = await Client.PostAsync("/api/cities/1/pointOfInterest", content);
             result.StatusCode.Should().Be(HttpStatusCode.Created);
             result.IsSuccessStatusCode.Should().BeTrue();
         }
@@ -108,25 +67,25 @@ namespace CityInfo.Test.Controllers
             };
 
             var content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            var result = await _client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            var result = await Client.PutAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             model.Name = new string('a', 51);
             content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await _client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result = await Client.PutAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             model.Name = new string('a', 50);
             model.Description = new string('a', 201);
             content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await _client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result = await Client.PutAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             model.Name = new string('a', 50);
             model.Description = new string('a', 200);
 
             content = new StringContent(JsonConvert.SerializeObject(model), Encoding.UTF8, "application/json");
-            result = await _client.PutAsync("/api/cities/1/pointOfInterest/1", content);
+            result = await Client.PutAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.NoContent);
             result.IsSuccessStatusCode.Should().BeTrue();
 
@@ -143,19 +102,19 @@ namespace CityInfo.Test.Controllers
             patchDoc.Remove(x => x.Description); // Invalid
 
             var content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            var result = await _client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            var result = await Client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             patchDoc.Replace(x => x.Name, new string('a', 51)); // Invalid - Too many characters
             patchDoc.Replace(x => x.Description, new string('a', 51)); // Valid - Should validate just Vame
             content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            result = await _client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result = await Client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             patchDoc.Replace(x => x.Name, new string('a', 50)); // Valid - Should validate Description
             patchDoc.Replace(x => x.Description, new string('a', 201)); // Invalid - Too many characters
             content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            result = await _client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result = await Client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.BadRequest);
 
             var validName = new string('a', 50);
@@ -164,7 +123,7 @@ namespace CityInfo.Test.Controllers
             patchDoc.Replace(x => x.Name, validName); // Valid
             patchDoc.Replace(x => x.Description, validDescription); // Valid
             content = new StringContent(JsonConvert.SerializeObject(patchDoc), Encoding.UTF8, "application/json");
-            result = await _client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
+            result = await Client.PatchAsync("/api/cities/1/pointOfInterest/1", content);
             result.StatusCode.Should().Be(HttpStatusCode.NoContent);
             result.IsSuccessStatusCode.Should().BeTrue();
 

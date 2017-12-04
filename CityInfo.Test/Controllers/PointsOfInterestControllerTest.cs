@@ -26,7 +26,6 @@ namespace CityInfo.Test.Controllers
     {
         private Mock<ILoggerService<PointsOfInterestController>> _mockLogger;
         private Mock<IMailService> _mockMailService;
-        private Mock<IRepository> _mockRepository;
 
         private PointsOfInterestController _controller;
 
@@ -35,7 +34,6 @@ namespace CityInfo.Test.Controllers
         {
             _mockLogger = new Mock<ILoggerService<PointsOfInterestController>>();
             _mockMailService = new Mock<IMailService>();
-            _mockRepository = new Mock<IRepository>();
 
             var city1 = new CityDto()
             {

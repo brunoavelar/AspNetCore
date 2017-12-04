@@ -25,18 +25,6 @@ namespace CityInfo.Test
             }
         }
 
-        private CityInfoContext BuildDiskContext()
-        {
-            var connection = new SqliteConnection("Data Source=testDB.db;");
-
-            var options = new DbContextOptionsBuilder<CityInfoContext>()
-                .UseSqlite(connection)
-                .Options;
-            var context = new CityInfoContext(options);
-
-            return context;
-        }
-
         [SetUp]
         public void Setup()
         {
@@ -109,7 +97,19 @@ namespace CityInfo.Test
             {
                 context.Cities.AddRange(cities);
                 context.SaveChanges();
-            }           
+            }
+        }
+
+        private CityInfoContext BuildDiskContext()
+        {
+            var connection = new SqliteConnection("Data Source=testDB.db;");
+
+            var options = new DbContextOptionsBuilder<CityInfoContext>()
+                .UseSqlite(connection)
+                .Options;
+            var context = new CityInfoContext(options);
+
+            return context;
         }
 
         [TearDown]
