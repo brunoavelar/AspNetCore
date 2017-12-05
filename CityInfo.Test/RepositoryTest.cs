@@ -16,6 +16,18 @@ namespace CityInfo.Test
     public class RepositoryTest : BaseTest
     {
         [Test]
+        public async Task GetCities_ShouldReturn_AllCities()
+        {
+            var repo = new Repository(Context);
+
+            var cities = await repo.GetCitiesAsync();
+
+            var expectedCities = Context.Cities;
+
+            cities.Should().Contain(expectedCities);
+        }
+
+        [Test]
         public async Task GetCities_ShouldReturn_OrderedCities()
         {
             var repo = new Repository(Context);
