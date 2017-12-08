@@ -27,14 +27,16 @@ namespace CityInfo.Api.Controllers
         }
 
         [HttpGet("{id}")]
-        public IActionResult GetCity(int id)
+        public IActionResult GetCity(int id, bool includePointOfInterest = false)
         {
-            var cityToReturn = CitiesDataStore.Current.Cities.FirstOrDefault(x => x.Id == id);
+            var city = _repository.GetCity(id, includePointOfInterest);
 
-            if (cityToReturn == null)
+            if (city == null)
             {
                 return NotFound();
             }
+
+            var cityToReturn = includePointOfInterest ? new CityDto(city) : new CityWithoutPointOfInterestDto(city);
 
             return Ok(cityToReturn);
         }

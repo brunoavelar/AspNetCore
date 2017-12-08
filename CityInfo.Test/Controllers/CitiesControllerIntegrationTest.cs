@@ -34,5 +34,36 @@ namespace CityInfo.Test.Controllers
             var content = await result.Content.ReadAsStringAsync();
             content.Should().Be(jsonFromDatabase);
         }
+
+        [Test]
+        public async Task GetCity_ShoulReturn_SpecifiedCity()
+        {
+            var repository = (Repository)Server.Host.Services.GetService(typeof(IRepository));
+            var city = repository.GetCity(1, true);
+            var cityDto = new CityDto
+            {
+                Id = city.Id,
+                Name = city.Name,
+                Description = city.Description
+            };
+
+            var poitsOfInterest = city.PointsOfInterest.Select(x => new PointOfInterestDto
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description
+            });
+
+            cityDto.PointsOfInterest.AddRange(poitsOfInterest);
+
+            var jsonFromDatabase = SerializeObject(cityDto);
+
+            var result = await Client.GetAsync("/api/cities/1?includePointOfInterest=true");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+            result.IsSuccessStatusCode.Should().BeTrue();
+
+            var content = await result.Content.ReadAsStringAsync();
+            content.Should().Be(jsonFromDatabase);
+        }
     }
 }
