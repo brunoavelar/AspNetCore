@@ -51,5 +51,25 @@ namespace CityInfo.Test
             city.Should().Be(expectedCity);
             city.PointsOfInterest.Should().NotBeEmpty();
         }
+
+        [Test]
+        public async Task CityExists_ShouldReturn_True_IfCityExists()
+        {
+            var expectedCity = await Context.Cities.FirstOrDefaultAsync();
+
+            var repo = new Repository(Context);
+            var exists = await repo.CityExists(expectedCity.Id);
+
+            exists.Should().BeTrue();
+        }
+
+        [Test]
+        public async Task CityExists_ShouldReturn_False_IfCityDoesntExists()
+        {
+            var repo = new Repository(Context);
+            var exists = await repo.CityExists(999);
+
+            exists.Should().BeFalse();
+        }
     }
 }

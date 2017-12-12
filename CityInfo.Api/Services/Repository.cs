@@ -10,6 +10,7 @@ namespace CityInfo.Api.Services
     public interface IRepository
     {
         Task<IEnumerable<City>> GetCitiesAsync();
+        Task<bool> CityExists(int id);
         City GetCity(int cityId, bool includePointsOfInterest);
         IEnumerable<PointOfInterest> GetPointsOfInterestForCity(int cityId);
         PointOfInterest GetPointOfInterest(int cityId, int pointOfInterestId);
@@ -51,6 +52,11 @@ namespace CityInfo.Api.Services
         public IEnumerable<PointOfInterest> GetPointsOfInterestForCity(int cityId)
         {
             throw new NotImplementedException();
+        }
+
+        public async Task<bool> CityExists(int id)
+        {
+            return await _context.Cities.AnyAsync(x => x.Id == id);
         }
     }
 }
