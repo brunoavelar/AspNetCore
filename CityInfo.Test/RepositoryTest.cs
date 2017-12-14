@@ -9,12 +9,37 @@ using NUnit.Framework;
 using FluentAssertions;
 using Microsoft.Data.Sqlite;
 using System.IO;
+using System.Linq;
 
 namespace CityInfo.Test
 {
     [TestFixture]
     public class RepositoryTest : BaseTest
     {
+        [Test]
+        public async Task GetPointsOfInterestForCity_ShouldReturn_PointsOfInterestOfTheCity()
+        {
+            var city = Context.Cities.First();
+            var expectedPois = city.PointsOfInterest;
+
+            var repo = new Repository(Context);
+
+            var pois = await repo.GetPointsOfInterestForCity(city.Id);
+            pois.ShouldBeEquivalentTo(expectedPois);
+        }
+
+        [Test]
+        public async Task GetPointsOfInterestForCity_ShouldNotReturn_PointsOfInterestOfOtherCities()
+        {
+            var city = Context.Cities.First();
+            var notExpectedPois = Context.PointsOfInterest.Where(x => x.CityId != city.Id);
+
+            var repo = new Repository(Context);
+
+            var pois = await repo.GetPointsOfInterestForCity(city.Id);
+            pois.Should().NotContain(notExpectedPois);
+        }
+
         [Test]
         public async Task GetCities_ShouldReturn_AllCities()
         {

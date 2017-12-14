@@ -12,7 +12,7 @@ namespace CityInfo.Api.Services
         Task<IEnumerable<City>> GetCitiesAsync();
         Task<bool> CityExists(int id);
         City GetCity(int cityId, bool includePointsOfInterest);
-        IEnumerable<PointOfInterest> GetPointsOfInterestForCity(int cityId);
+        Task<IEnumerable<PointOfInterest>> GetPointsOfInterestForCity(int cityId);
         PointOfInterest GetPointOfInterest(int cityId, int pointOfInterestId);
     }
 
@@ -49,9 +49,12 @@ namespace CityInfo.Api.Services
             throw new NotImplementedException();
         }
 
-        public IEnumerable<PointOfInterest> GetPointsOfInterestForCity(int cityId)
+        public async Task<IEnumerable<PointOfInterest>> GetPointsOfInterestForCity(int cityId)
         {
-            throw new NotImplementedException();
+            return await _context
+                .PointsOfInterest
+                .Where(x => x.CityId == cityId)
+                .ToListAsync();
         }
 
         public async Task<bool> CityExists(int id)
