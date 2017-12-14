@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.JsonPatch;
 using CityInfo.Api.Services;
 using System;
+using System.Collections.Generic;
 
 namespace CityInfo.Api.Controllers
 {
@@ -15,23 +16,27 @@ namespace CityInfo.Api.Controllers
 
         private ILoggerService<PointsOfInterestController> _logger;
         private IMailService _mailService;
+        private IRepository _repository;
 
-        public PointsOfInterestController(ILoggerService<PointsOfInterestController> logger, IMailService mailService)
+        public PointsOfInterestController(ILoggerService<PointsOfInterestController> logger, IMailService mailService, IRepository repository)
         {
             _logger = logger;
             _mailService = mailService;
+            _repository = repository;
         }
 
         [HttpGet("{cityId}/pointsOfInterest")]
-        public IActionResult GetPointsOfInterest(int cityId)
+        public async Task<IActionResult> GetPointsOfInterest(int cityId)
         {
-            var city = GetCity(cityId);
-            if (city == null)
+            if (!await CityExists(cityId))
             {
                 return NotFound();
             }
 
-            return Ok(city.PointsOfInterest);
+            var pois = await _repository.GetPointsOfInterestForCity(cityId);
+            var poisDto = pois.Select(x => new PointOfInterestDto(x));
+
+            return Ok(poisDto);
         }
 
         [HttpGet("{cityId}/pointOfInterest/{id}", Name = GetPointOfInterestRouteName)]
@@ -202,6 +207,19 @@ namespace CityInfo.Api.Controllers
             }
 
             return city;
+        }
+
+        private async Task<bool> CityExists(int cityId)
+        {
+            var cityExists = await _repository.CityExists(cityId);
+
+            if (!cityExists)
+            {
+                var cityNotFoundMsg = string.Format(LogMessages.CityNotFoundMsg, cityId);
+                _logger.LogInformation(cityNotFoundMsg);
+            }
+
+            return cityExists;
         }
 
         private PointOfInterestDto GetPointOfInterest(CityDto city, int pointOfInterestId)

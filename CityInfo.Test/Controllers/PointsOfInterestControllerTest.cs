@@ -18,6 +18,7 @@ using CityInfo.Test.Extentions;
 using Moq;
 using CityInfo.Api.Services;
 using Microsoft.AspNetCore;
+using CityInfo.Api.Entities;
 
 namespace CityInfo.Test.Controllers
 {
@@ -26,14 +27,38 @@ namespace CityInfo.Test.Controllers
     {
         private Mock<ILoggerService<PointsOfInterestController>> _mockLogger;
         private Mock<IMailService> _mockMailService;
+        private Mock<IRepository> _mockRepository;
 
         private PointsOfInterestController _controller;
+
+        City CityWithTwoPointsOfInterest = new City()
+        {
+            Id = 1,
+            Name = "City 1",
+            Description = "Description of city 1",
+            PointsOfInterest = new List<PointOfInterest>
+                {
+                    new PointOfInterest
+                    {
+                        Id = 1,
+                        Name = "PoI 1",
+                        Description = "Description of PoI 1"
+                    },
+                    new PointOfInterest
+                    {
+                        Id = 2,
+                        Name = "PoI 2",
+                        Description = "Description of PoI 2"
+                    }
+                }
+        };
 
         [SetUp]
         public void Setup()
         {
             _mockLogger = new Mock<ILoggerService<PointsOfInterestController>>();
             _mockMailService = new Mock<IMailService>();
+            _mockRepository = new Mock<IRepository>();
 
             var city1 = new CityDto()
             {
@@ -60,7 +85,7 @@ namespace CityInfo.Test.Controllers
             CitiesDataStore.Current.Cities.Clear();
             CitiesDataStore.Current.Cities.Add(city1);
 
-            _controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object);
+            _controller = new PointsOfInterestController(_mockLogger.Object, _mockMailService.Object, _mockRepository.Object);
         }
 
         [TearDown]
@@ -75,18 +100,23 @@ namespace CityInfo.Test.Controllers
         #region Get Points of Interest
 
         [Test]
-        public void GetPointsOfInterest_ShouldReturn_200()
+        public async Task GetPointsOfInterest_ShouldReturn_200()
         {
-            var result = _controller.GetPointsOfInterest(1);
+            _mockRepository.Setup(x => x.CityExists(CityWithTwoPointsOfInterest.Id)).Returns(Task.FromResult(true));
+
+            var result = await _controller.GetPointsOfInterest(CityWithTwoPointsOfInterest.Id);
             result.Should().BeOfType<OkObjectResult>();
             var okResult = (OkObjectResult)result;
             okResult.StatusCode.Should().Be((int)HttpStatusCode.OK);
         }
 
         [Test]
-        public void GetPointsOfInterest_ShouldReturn_AllPointsOfInterestsForTheCity()
+        public async Task GetPointsOfInterest_ShouldReturn_AllPointsOfInterestsForTheCity()
         {
-            var result = _controller.GetPointsOfInterest(1);
+            _mockRepository.Setup(x => x.CityExists(CityWithTwoPointsOfInterest.Id)).Returns(Task.FromResult(true));
+            _mockRepository.Setup(x => x.GetPointsOfInterestForCity(CityWithTwoPointsOfInterest.Id)).Returns(Task.FromResult(CityWithTwoPointsOfInterest.PointsOfInterest.AsEnumerable()));
+
+            var result = await _controller.GetPointsOfInterest(CityWithTwoPointsOfInterest.Id);
             var okResult = (OkObjectResult)result;
             var data = (IEnumerable<PointOfInterestDto>)okResult.Value;
 
@@ -94,18 +124,18 @@ namespace CityInfo.Test.Controllers
         }
 
         [Test]
-        public void GetPointsOfInterest_ShouldReturn_404_When_TheCityIsNotFound()
+        public async Task GetPointsOfInterest_ShouldReturn_404_When_TheCityIsNotFound()
         {
-            var result = _controller.GetPointsOfInterest(2);
+            var result = await _controller.GetPointsOfInterest(2);
             result.Should().BeOfType<NotFoundResult>();
             var notFoundResult = (NotFoundResult)result;
             notFoundResult.StatusCode.Should().Be((int)HttpStatusCode.NotFound);
         }
 
         [Test]
-        public void GetPointsOfInterest_ShouldLog_Message_When_TheCityIsNotFound()
+        public async Task GetPointsOfInterest_ShouldLog_Message_When_TheCityIsNotFound()
         {
-            _controller.GetPointsOfInterest(2);
+            await _controller.GetPointsOfInterest(2);
             _mockLogger.Verify(x => x.LogInformation(It.IsAny<string>()), Times.Once());
             var expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 2);
         }

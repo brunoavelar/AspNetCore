@@ -25,10 +25,28 @@ namespace CityInfo.Test.Controllers
     public class PointsOfInterestControllerIntegrationTest : IntegrationTestBase
     {
         [Test]
+        public async Task GetPointsOfInterest_Integrate_ShouldReturnEntities()
+        {
+            var repository = (Repository)Server.Host.Services.GetService(typeof(IRepository));
+            var pois = await repository.GetPointsOfInterestForCity(1);
+            var poisDto = pois.Select(x => new PointOfInterestDto()
+            {
+                Id = x.Id,
+                Name = x.Name,
+                Description = x.Description
+            });
+            var jsonFromDatabase = SerializeObject(poisDto);
+
+            var result = await Client.GetAsync("/api/cities/1/pointsOfInterest");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var content = await result.Content.ReadAsStringAsync();
+            content.Should().Be(jsonFromDatabase);
+        }
+
+        [Test]
         public async Task CreatePointOfInterest_Integrate_ShouldValidateEntity()
         {
-            var currentMaxId = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Max(x => x.Id);
-            
             var model = new PointOfInterestForCreationDto
             {
                 Name = string.Empty
