@@ -45,6 +45,26 @@ namespace CityInfo.Test.Controllers
         }
 
         [Test]
+        public async Task GetPointOfInterest_Integrate_ShouldReturnEntity()
+        {
+            var repository = (Repository)Server.Host.Services.GetService(typeof(IRepository));
+            var poi = (await repository.GetPointsOfInterestForCity(1)).First();
+            var poiDto = new PointOfInterestDto()
+            {
+                Id = poi.Id,
+                Name = poi.Name,
+                Description = poi.Description
+            };
+            var jsonFromDatabase = SerializeObject(poiDto);
+
+            var result = await Client.GetAsync("/api/cities/1/pointOfInterest/1");
+            result.StatusCode.Should().Be(HttpStatusCode.OK);
+
+            var content = await result.Content.ReadAsStringAsync();
+            content.Should().Be(jsonFromDatabase);
+        }
+
+        [Test]
         public async Task CreatePointOfInterest_Integrate_ShouldValidateEntity()
         {
             var model = new PointOfInterestForCreationDto

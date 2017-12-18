@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.JsonPatch;
 using CityInfo.Api.Services;
 using System;
 using System.Collections.Generic;
+using CityInfo.Api.Entities;
 
 namespace CityInfo.Api.Controllers
 {
@@ -42,13 +43,14 @@ namespace CityInfo.Api.Controllers
         [HttpGet("{cityId}/pointOfInterest/{id}", Name = GetPointOfInterestRouteName)]
         public IActionResult GetPointOfInterest(int cityId, int id)
         {
-            var city = GetCity(cityId);
+            var city = GetCityFromRepository(cityId);
+
             if (city == null)
             {
                 return NotFound();
             }
 
-            var pointOfInterest = GetPointOfInterest(city, id);
+            var pointOfInterest = GetPointOfInterestFromCity(city, id);
             if (pointOfInterest == null)
             {
                 return NotFound();
@@ -117,7 +119,7 @@ namespace CityInfo.Api.Controllers
                 return Task.FromResult<IActionResult>(NotFound());
             }
 
-            var pointOfInterestFromDb = GetPointOfInterest(city, id);
+            var pointOfInterestFromDb = GetPointOfInterestFromCity(city, id);
             if (pointOfInterestFromDb == null)
             {
                 return Task.FromResult<IActionResult>(NotFound());
@@ -143,7 +145,7 @@ namespace CityInfo.Api.Controllers
                 return Task.FromResult<IActionResult>(NotFound());
             }
 
-            var pointOfInterestFromDb = GetPointOfInterest(city, id);
+            var pointOfInterestFromDb = GetPointOfInterestFromCity(city, id);
             if (pointOfInterestFromDb == null)
             {
                 return Task.FromResult<IActionResult>(NotFound());
@@ -179,7 +181,7 @@ namespace CityInfo.Api.Controllers
                 return Task.FromResult<IActionResult>(NotFound());
             }
 
-            var pointOfInterestFromDb = GetPointOfInterest(city, id);
+            var pointOfInterestFromDb = GetPointOfInterestFromCity(city, id);
             if (pointOfInterestFromDb == null)
             {
                 return Task.FromResult<IActionResult>(NotFound());
@@ -194,6 +196,19 @@ namespace CityInfo.Api.Controllers
         private void NotifyAdmin(PointOfInterestDto pointOfInterest)
         {
             _mailService.Send("Point of Interested deleted", $"The Point of Interested {pointOfInterest.Name} was deleted");
+        }
+
+        private CityDto GetCityFromRepository(int cityId)
+        {
+            var city = _repository.GetCity(cityId, true);
+
+            if (city == null)
+            {
+                var cityNotFoundMsg = string.Format(LogMessages.CityNotFoundMsg, cityId);
+                _logger.LogInformation(cityNotFoundMsg);
+            }
+
+            return new CityDto(city);
         }
 
         private CityDto GetCity(int cityId)
@@ -222,7 +237,7 @@ namespace CityInfo.Api.Controllers
             return cityExists;
         }
 
-        private PointOfInterestDto GetPointOfInterest(CityDto city, int pointOfInterestId)
+        private PointOfInterestDto GetPointOfInterestFromCity(CityDto city, int pointOfInterestId)
         {
             var pointOfInterest = city.PointsOfInterest.SingleOrDefault(x => x.Id == pointOfInterestId);
 
