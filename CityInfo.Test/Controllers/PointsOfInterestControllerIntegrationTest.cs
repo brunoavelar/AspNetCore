@@ -94,6 +94,9 @@ namespace CityInfo.Test.Controllers
             result = await Client.PostAsync("/api/cities/1/pointOfInterest", content);
             result.StatusCode.Should().Be(HttpStatusCode.Created);
             result.IsSuccessStatusCode.Should().BeTrue();
+
+            var cityFromDb = CitiesDataStore.Current.Cities.SelectMany(x => x.PointsOfInterest).Single(x => x.Name == model.Name);
+            cityFromDb.Description.Should().Be(model.Description);
         }
 
         [Test]
