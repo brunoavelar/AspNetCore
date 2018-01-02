@@ -147,6 +147,8 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldReturn_200()
         {
+            _mockRepository.Setup(x => x.GetCity(1, true)).Returns(CityWithTwoPointsOfInterest);
+
             var result = _controller.GetPointOfInterest(1, 1);
             result.Should().BeOfType<OkObjectResult>();
             var okResult = (OkObjectResult)result;
@@ -156,12 +158,13 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldReturn_ThePointOfInterestWithSpecifiedIdFromTheSpecifiedTheCity()
         {
+            _mockRepository.Setup(x => x.GetCity(1, true)).Returns(CityWithTwoPointsOfInterest);
+
             var result = _controller.GetPointOfInterest(1, 1);
             var okResult = (OkObjectResult)result;
             var data = (PointOfInterestDto)okResult.Value;
 
-            var poiFromDb = CitiesDataStore.Current.Cities
-                .Single(x => x.Id == 1)
+            var poiFromDb = CityWithTwoPointsOfInterest
                 .PointsOfInterest
                 .Single(x => x.Id == 1);
 
@@ -190,6 +193,7 @@ namespace CityInfo.Test.Controllers
         [Test]
         public void GetPointOfInterest_ShouldLogMessage_When_ThePoiIsNotFound()
         {
+            _mockRepository.Setup(x => x.GetCity(1, true)).Returns(CityWithTwoPointsOfInterest);
 
             var result = _controller.GetPointOfInterest(1, 3);
             var expectedLog = string.Format(LogMessages.PointOfInterestNotFoundMsg, 3);

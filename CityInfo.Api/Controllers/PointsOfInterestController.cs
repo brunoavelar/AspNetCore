@@ -50,7 +50,9 @@ namespace CityInfo.Api.Controllers
                 return NotFound();
             }
 
-            var pointOfInterest = GetPointOfInterestFromCity(city, id);
+            var cityDto = new CityDto(city);
+
+            var pointOfInterest = GetPointOfInterestFromCity(cityDto, id);
             if (pointOfInterest == null)
             {
                 return NotFound();
@@ -198,7 +200,7 @@ namespace CityInfo.Api.Controllers
             _mailService.Send("Point of Interested deleted", $"The Point of Interested {pointOfInterest.Name} was deleted");
         }
 
-        private CityDto GetCityFromRepository(int cityId)
+        private City GetCityFromRepository(int cityId)
         {
             var city = _repository.GetCity(cityId, true);
 
@@ -208,7 +210,7 @@ namespace CityInfo.Api.Controllers
                 _logger.LogInformation(cityNotFoundMsg);
             }
 
-            return new CityDto(city);
+            return city;
         }
 
         private CityDto GetCity(int cityId)
